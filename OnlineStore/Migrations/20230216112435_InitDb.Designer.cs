@@ -12,7 +12,7 @@ using OnlineStore.Data;
 namespace OnlineStore.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20230216082516_InitDb")]
+    [Migration("20230216112435_InitDb")]
     partial class InitDb
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -163,9 +163,6 @@ namespace OnlineStore.Migrations
                     b.Property<Guid>("CategoryId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("ImageUrl")
-                        .HasColumnType("text");
-
                     b.Property<string>("Name")
                         .HasColumnType("text");
 
@@ -175,9 +172,14 @@ namespace OnlineStore.Migrations
                     b.Property<string>("ShortDescription")
                         .HasColumnType("text");
 
+                    b.Property<Guid>("UserAccountId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
+
+                    b.HasIndex("UserAccountId");
 
                     b.ToTable("Books");
                 });
@@ -331,10 +333,23 @@ namespace OnlineStore.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("OnlineStore.Models.UserAccount", "UserAccount")
+                        .WithMany("Books")
+                        .HasForeignKey("UserAccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Category");
+
+                    b.Navigation("UserAccount");
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Category", b =>
+                {
+                    b.Navigation("Books");
+                });
+
+            modelBuilder.Entity("OnlineStore.Models.UserAccount", b =>
                 {
                     b.Navigation("Books");
                 });

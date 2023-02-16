@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using OnlineStore.Models;
 using OnlineStore.Repository;
 using System.Data;
+using System.Security.Claims;
 
 namespace OnlineStore.Controllers;
 
@@ -16,11 +18,17 @@ public class BookController : Controller
         _repository = repository;
     }
 
+    [Authorize]
     public async Task<IActionResult> Index()
     {
-        var books = await _repository.Book.GetAll(false).Include(b => b.Category).ToListAsync();
+        var userId = new Guid(User.FindFirstValue(ClaimTypes.NameIdentifier)); // get the ID of the current user
+        var books = await _repository.Book.GetAll(false)
+            .Where(b => b.UserAccountId == userId) // add a filter to only include books that belong to the current user
+            .Include(b => b.Category)
+            .ToListAsync();
         return View(books);
     }
+    [Authorize]
     public async Task<IActionResult> Details(Guid? id)
     {
         if (id == null)
@@ -37,6 +45,7 @@ public class BookController : Controller
 
         return View(book);
     }
+    [Authorize]
     public IActionResult Create()
     {
         ViewBag.Categories = new SelectList(_repository.Category.GetAll(false).ToList(), "Id", "Name");
@@ -44,11 +53,13 @@ public class BookController : Controller
     }
 
     [HttpPost]
+    [Authorize]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(Book book)
     {
         if (ModelState.IsValid)
         {
+            book.UserAccountId = new Guid(User.FindFirstValue(ClaimTypes.NameIdentifier)); // set the ID of the current user as the book's owner
             await _repository.Book.NewBook(book);
             await _repository.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
@@ -56,6 +67,8 @@ public class BookController : Controller
         ViewBag.Categories = new SelectList(_repository.Category.GetAll(false).ToList(), "Id", "Name", book.CategoryId);
         return View(book);
     }
+
+    [Authorize]
     public async Task<IActionResult> Edit(Guid id)
     {
         var book = await _repository.Book.GetById(id,true);
@@ -67,6 +80,7 @@ public class BookController : Controller
         return View(book);
     }
     [HttpPost]
+    [Authorize]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(Guid id, Book book)
     {
@@ -98,7 +112,7 @@ public class BookController : Controller
         ViewBag.Categories = new SelectList(_repository.Category.GetAll(false), "Id", "Name", book.CategoryId);
         return View(book);
     }
-
+    [Authorize]
     public async Task<IActionResult> Delete(Guid? id)
     {
         if (id == null)
@@ -117,6 +131,7 @@ public class BookController : Controller
     }
 
     [HttpPost, ActionName("Delete")]
+    [Authorize]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(Guid id)
     {

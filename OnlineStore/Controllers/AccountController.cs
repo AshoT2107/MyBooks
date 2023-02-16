@@ -96,6 +96,7 @@ public class AccountController : Controller
         return View(model);
     }
     [HttpGet]
+    [Authorize]
     public async Task<IActionResult> EditProfile()
     {
         // Get the user's current profile data
@@ -117,6 +118,7 @@ public class AccountController : Controller
         return View(model);
     }
     [HttpPost]
+    [Authorize]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditProfile(EditUserAccount model)
     {
